@@ -1,2 +1,6 @@
 __pycache__/
 .ipynb_checkpoints/
+auth_v1
+redirect
+v1_function_calling
+v2_pd_langchain
