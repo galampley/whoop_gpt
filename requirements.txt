@@ -14,3 +14,4 @@ scikit-learn
 tenacity
 langchain
 datetime
+requests_oauthlib
