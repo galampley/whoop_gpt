@@ -12,3 +12,5 @@ matplotlib
 plotly
 scikit-learn
 tenacity
+langchain
+datetime
