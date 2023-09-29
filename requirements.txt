@@ -14,4 +14,4 @@ langchain
 datetime
 requests_oauthlib
 streamlit
-
+uvicorn
