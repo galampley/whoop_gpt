@@ -8,7 +8,8 @@ import requests
 # Function to fetch authorization URL
 def fetch_auth_url():
     try:
-        response = requests.get("http://localhost:8000/auth_url")
+        # response = requests.get("http://localhost:8000/auth_url")
+        response = requests.get("https://whoop-gpt-45ade1b84fc3.herokuapp.com/")
         data = response.json()
         return data["auth_url"]
     except Exception as e:
@@ -40,7 +41,8 @@ def main():
 
         if st.button("Submit"):
             # Fetch the bot's response
-            response = requests.post("http://localhost:8001/query", json={"query": user_input, "token": token})
+            # response = requests.post("http://localhost:8001/query", json={"query": user_input, "token": token})
+            response = requests.post("https://whoop-gpt-45ade1b84fc3.herokuapp.com/", json={"query": user_input, "token": token})
             bot_reply = response.json().get("response", "Could not fetch response")
 
             # Update conversation history in session state
