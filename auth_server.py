@@ -23,7 +23,8 @@ app = FastAPI()
 # fastapi CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:8501"],  # Update this to the domain where your Streamlit app will run
+    # allow_origins=["http://localhost:8501"],  # Update this to the domain where your Streamlit app will run
+    allow_origins=["https://whoop-gpt-45ade1b84fc3.herokuapp.com/"],  # Update this to the domain where your Streamlit app will run
     allow_credentials=True,
     allow_methods=["GET", "POST"],
     allow_headers=["Authorization", "Content-Type"],
@@ -39,7 +40,8 @@ logging.info(f"WHOOP_CLIENT_SECRET: {whoop_client_secret}")
 whoop_api = WhoopAPI(
     client_id=whoop_client_id,
     client_secret=whoop_client_secret,
-    redirect_uri='http://localhost:8000/token',  # Callback URL
+    # redirect_uri='http://localhost:8000/token',  # Callback URL
+    redirect_uri='https://whoop-gpt-45ade1b84fc3.herokuapp.com/',  # Callback URL
     all_scopes=["read:profile", "read:recovery", "read:workout", "read:sleep", "read:body_measurement", "read:cycles"]
 )
 
@@ -72,7 +74,8 @@ async def get_token(code: str, state: str = None):
         logging.error(f"Error occurred: {e}")
         raise HTTPException(status_code=400, detail=str(e))
 
-    streamlit_url = f"http://localhost:8501/?token={access_token}"
+    # streamlit_url = f"http://localhost:8501/?token={access_token}"
+    streamlit_url = f"https://whoop-gpt-45ade1b84fc3.herokuapp.com/?token={access_token}"
     return RedirectResponse(url=streamlit_url)
 
 
