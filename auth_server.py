@@ -24,7 +24,7 @@ app = FastAPI()
 app.add_middleware(
     CORSMiddleware,
     # allow_origins=["http://localhost:8501"],  # Update this to the domain where your Streamlit app will run
-    allow_origins=["https://whoop-gpt-45ade1b84fc3.herokuapp.com/"],  # Update this to the domain where your Streamlit app will run
+    allow_origins=["https://whoop-gpt-45ade1b84fc3.herokuapp.com/", "https://whoopgpt-5srrxenqyvgshz5ccbqhda.streamlit.app"],  # Update this to the domain where your Streamlit app will run
     allow_credentials=True,
     allow_methods=["GET", "POST"],
     allow_headers=["Authorization", "Content-Type"],
@@ -75,7 +75,8 @@ async def get_token(code: str, state: str = None):
         raise HTTPException(status_code=400, detail=str(e))
 
     # streamlit_url = f"http://localhost:8501/?token={access_token}"
-    streamlit_url = f"https://whoop-gpt-45ade1b84fc3.herokuapp.com/?token={access_token}"
+    # streamlit_url = f"https://whoop-gpt-45ade1b84fc3.herokuapp.com/?token={access_token}"
+    streamlit_url = f"https://whoopgpt-5srrxenqyvgshz5ccbqhda.streamlit.app/?token={access_token}"
     return RedirectResponse(url=streamlit_url)
 
 
