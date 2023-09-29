@@ -1,0 +1,14 @@
+dotenv
+fastapi
+logging
+pandas
+pydantic
+requests
+streamlit
+openai
+numpy
+python-dotenv
+matplotlib
+plotly
+scikit-learn
+tenacity
