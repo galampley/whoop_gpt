@@ -1,5 +1,5 @@
 '''
-Fetches an authorization URL from a FastAPI server (backend_server). When a user clicks the authorization link, they are redirected to authenticate themselves. \
+Fetches an authorization URL from a FastAPI server (auth_server). When a user clicks the authorization link, they are redirected to authenticate themselves. \
 Once authenticated, the access token is extracted and used to make an authenticated API call to the FastAPI server to fetch data.
 '''
 import streamlit as st

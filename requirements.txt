@@ -1,6 +1,4 @@
-dotenv
 fastapi
-logging
 pandas
 pydantic
 requests
@@ -12,3 +10,7 @@ matplotlib
 plotly
 scikit-learn
 tenacity
+langchain
+datetime
+requests_oauthlib
+streamlit
