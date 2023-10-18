@@ -19,7 +19,7 @@ openai.api_key = os.getenv("OPENAI_API_KEY")
 
 llm = ChatOpenAI(    
     openai_api_key=openai.api_key , 
-    model_name="gpt-3.5-turbo", 
+    model_name="gpt-4", 
     temperature=0.0
     )
 
@@ -126,14 +126,10 @@ def handle_query(query: Query):
         return {"error": "No sleep data available"}
     
     python = PythonAstREPLTool(locals={
-        "df_sleep": sleep_data,
-        # "df_workout": df_workout,
-        # "df_recovery": df_recovery,
-        # ... add more DataFrames as needed
-    })
+        "df_sleep": sleep_data
+        })
     
     df_sleep_columns = sleep_data.columns.to_list()
-    # df_workout_columns = df_sleep.columns.to_list()
 
     tools = [
         Tool(
@@ -141,10 +137,10 @@ def handle_query(query: Query):
             func=python.run,
             description = f"""
             Useful for when you need to answer questions about Whoop data stored in pandas dataframe 'df_sleep'. 
-            Run python pandas operations on 'df_sleep' to help you get the right answer.
+            Run python pandas operations on 'df_sleep' to help you get the right answer. 
             'df_sleep' has the following columns: {df_sleep_columns}.
             
-            Each column ({df_sleep_columns}) from 'df_sleep' is defined below between '####'
+            Each column from 'df_sleep' is defined below between '####'
             
             ####
             id: Unique identifier for the sleep activity.
@@ -173,28 +169,19 @@ def handle_query(query: Query):
             score_sleep_consistency_percentage: How consistent the Whoop User slept.
             score_sleep_efficiency_percentage: How efficient the Whoop User slept.
             ####
-            
-            Example below between '####'
-            
-            ####
-            <user>: What was my total baseline sleep needed, from 8/28/23 to 9/2/23, in hours?
-            <assistant>: df[["score_sleep_needed_baseline_milli"]
-            <assistant>: You're total baseline sleep needed was n 
-            ####
             """
         ),
         Tool.from_function(
             func = today_date,
             name = "today_date",
             description=f"""
-            Useful for when you need to know today's date when querying Whoop Sleep Data. Use to filter 'df_sleep' to a relevant subset. 
-            'start' and 'end' date values in 'df_sleep' are of format ISO 8601 and look like this for example, '2023-08-29T13:26:21.600Z'. You will need to convert
-            to match user query format with 'df_sleep' format.
+            Useful for when you need to know today's date when querying Whoop Sleep Data. You will need to know today's date if asked a question regarding a 
+            target date, like yesterday (last night) or x days/nights ago. You will determine today's date then determine the target date based on logic below. 
             
             Examples of logic between '####'
             
             ####
-            If today is 9/22/2023 then yesterday was 9/21/2023. 
+            If today is 9/22/2023 then yesterday was 9/21/2023. Subtract 1 day.
             If today is 9/22/2023 then 2 (two) days ago was 9/20/2023, 3 days ago was 9/19/2023. So on and so forth through the calendar.
             ####
             """
@@ -203,7 +190,7 @@ def handle_query(query: Query):
 
     # change the value of the prefix argument in the initialize_agent function. This will overwrite the default prompt template of the zero shot agent type
     agent_kwargs = {'prefix': f'You are friendly fitness assistant. You are tasked to assist the current user on questions related to their personal Whoop data. You have access to the following tools:'}
-   
+
     # initialize the LLM agent
     agent = initialize_agent(tools, 
                             llm, 
@@ -213,6 +200,5 @@ def handle_query(query: Query):
                             )
     user_input = query.query 
     response = agent.run(user_input)
-    # print("Returning this response:", {"response": response})  # Debugging line
     return {"response": response}
     

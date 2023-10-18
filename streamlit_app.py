@@ -8,8 +8,8 @@ import requests
 # Function to fetch authorization URL
 def fetch_auth_url():
     try:
-        # response = requests.get("http://localhost:8000/auth_url")
-        response = requests.get("https://whoop-gpt-45ade1b84fc3.herokuapp.com/auth_url")
+        response = requests.get("http://localhost:8000/auth_url")
+        # response = requests.get("https://whoop-gpt-45ade1b84fc3.herokuapp.com/auth_url")
         data = response.json()
         return data["auth_url"]
     except Exception as e:
@@ -27,6 +27,7 @@ def main():
 
     auth_url = fetch_auth_url()
     st.title("WhoopGPT")
+    st.write("Authorizing with OAuth2.0, connecting to Whoop with FastAPI and converting data to pandas df so that Langchain Agent, with custom Tools, can converse with the data.")
     st.markdown(f"To authorize, [click here]({auth_url})")
     st.markdown("**Note:** Authorization only lasts for 60 minutes. After 60 minutes, reauthorize with 'click here'")  # This line informs the user about the time limit
 
@@ -34,15 +35,14 @@ def main():
     
     if token:
         token = token[0]
-        # st.write(f"Access Token: {token}")  # For debugging
 
         # New feature: Query through OpenAI
         user_input = st.text_area("Enter your query:")
 
         if st.button("Submit"):
             # Fetch the bot's response
-            # response = requests.post("http://localhost:8001/query", json={"query": user_input, "token": token})
-            response = requests.post("https://whoop-gpt-45ade1b84fc3.herokuapp.com/query", json={"query": user_input, "token": token})
+            response = requests.post("http://localhost:8001/query", json={"query": user_input, "token": token})
+            # response = requests.post("https://whoop-gpt-45ade1b84fc3.herokuapp.com/query", json={"query": user_input, "token": token})
             bot_reply = response.json().get("response", "Could not fetch response")
 
             # Update conversation history in session state
