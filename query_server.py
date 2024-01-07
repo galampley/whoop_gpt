@@ -5,10 +5,12 @@ import requests
 import pandas as pd
 from dotenv import load_dotenv
 import os
-from langchain.tools.python.tool import PythonAstREPLTool
+# from langchain.tools.python.tool import PythonAstREPLTool
+from langchain_experimental.utilities import PythonREPL
 from langchain.agents import initialize_agent, Tool
 from langchain.agents import AgentType
-from langchain.chat_models import ChatOpenAI
+# from langchain.chat_models import ChatOpenAI
+from langchain_openai import ChatOpenAI
 from datetime import datetime
 from pandas import json_normalize
 from fastapi.middleware.cors import CORSMiddleware
@@ -45,11 +47,31 @@ def fetch_sleep_data(token: str):
     all_records = []
     next_token = None
 
+    '''
     df_main = pd.DataFrame()
     df_score = pd.DataFrame()
     df_stage_summary = pd.DataFrame()
     df_sleep_needed = pd.DataFrame()
+    df_2 = pd.DataFrame() # moved out of loop for better org
+    '''
 
+    while True: 
+        response = requests.get(sleep_endpoint_url, headers=headers, params={"nextToken": next_token})
+        data = response.json()
+
+        all_records.extend(data['records'])
+
+        next_token = data.get('next_token')
+
+        if not next_token:
+            break
+
+    df = pd.json_normalize(all_records)
+    df_sleep = df.drop(columns=['score'])
+    # print(new_df)
+    return(df_sleep)
+    '''
+    # old version of above
     while True:
         params = {}
         if next_token:
@@ -65,6 +87,8 @@ def fetch_sleep_data(token: str):
             break
 
     for record in all_records:
+
+        # old version of below
         temp_df_main = json_normalize(record, sep='_')
         df_main = pd.concat([df_main, temp_df_main])
 
@@ -79,12 +103,43 @@ def fetch_sleep_data(token: str):
         temp_df_sleep_needed = json_normalize(record['score']['sleep_needed'], sep='_')
         temp_df_sleep_needed['id'] = record['id']
         df_sleep_needed = pd.concat([df_sleep_needed, temp_df_sleep_needed])
+        
+        # new version of above, handling Nones
+        if record['score'] is not None:
+            # Normalize and concatenate 'score' data
+            temp_df_score = json_normalize(record['score'], sep='_')
+            temp_df_score['id'] = record['id']
+            df_score = pd.concat([df_score, temp_df_score], ignore_index=True)
 
+            if 'stage_summary' in record['score']:
+                temp_df_stage_summary = json_normalize(record['score']['stage_summary'], sep='_')
+                temp_df_stage_summary['id'] = record['id']
+                df_stage_summary = pd.concat([df_stage_summary, temp_df_stage_summary], ignore_index=True)
+
+            if 'sleep_needed' in record['score']:
+                temp_df_sleep_needed = json_normalize(record['score']['sleep_needed'], sep='_')
+                temp_df_sleep_needed['id'] = record['id']
+                df_sleep_needed = pd.concat([df_sleep_needed, temp_df_sleep_needed], ignore_index=True)
+
+    # old version of below
     df_2 = pd.merge(df_main, df_score, on='id')
     df_2 = pd.merge(df_2, df_stage_summary, on='id')
     df_2 = pd.merge(df_2, df_sleep_needed, on='id')
 
-    # Drop duplicate columns
+    # new version of above, check if 'id' column exists in df_main and df_score, then merge; handles Nones
+    if 'id' in df_main.columns and 'id' in df_score.columns:
+        df_2 = pd.merge(df_main, df_score, on='id', how='outer')
+
+    if 'id' in df_2.columns and 'id' in df_stage_summary.columns:
+        df_2 = pd.merge(df_2, df_stage_summary, on='id', how='outer')
+
+    if 'id' in df_2.columns and 'id' in df_sleep_needed.columns:
+        df_2 = pd.merge(df_2, df_sleep_needed, on='id', how='outer')
+    else:
+        # Handle the case where 'id' is missing in one of the DataFrames
+        print("Warning: 'id' column missing in one of the DataFrames")
+
+    # Drop duplicate columns, when it WAS necessary but doesn't seem to be anymore
     duplicate_columns = ['respiratory_rate',
         'sleep_performance_percentage', 'sleep_consistency_percentage',
         'sleep_efficiency_percentage', 'stage_summary_total_in_bed_time_milli',
@@ -103,12 +158,18 @@ def fetch_sleep_data(token: str):
         'total_rem_sleep_time_milli', 'sleep_cycle_count', 'disturbance_count','baseline_milli',
         'need_from_sleep_debt_milli', 'need_from_recent_strain_milli',
         'need_from_recent_nap_milli']
+    
+    # df_sleep = df_2.drop(columns=duplicate_columns)
 
-    df_sleep = df_2.drop(columns=duplicate_columns)
+    # new to replace above, check and filter out columns that actually exist in df_2
+    columns_to_drop = [col for col in duplicate_columns if col in df_2.columns]
+    df_sleep = df_2.drop(columns=columns_to_drop)
+
     print("Data fetched:", df_sleep)
     
     return(df_sleep)
-     
+    '''
+
 class Query(BaseModel):
     query: str
     token: str 
@@ -120,27 +181,37 @@ def handle_query(query: Query):
     # Prepare data using separate functions
     sleep_data = fetch_sleep_data(query.token)
     # workout_data = fetch_workout_data(query.token)
-    # ... fetch other types of data as needed
 
     if sleep_data is None:
         return {"error": "No sleep data available"}
     
+    '''
     python = PythonAstREPLTool(locals={
         "df_sleep": sleep_data
         })
+    '''
+    '''
+    # new version of above given Langchain updates
+    python = PythonREPL(locals={
+    "df_sleep": sleep_data
+    })
+    '''
+
+    python = PythonREPL()
+    python.globals['sleep_data'] = sleep_data
     
-    df_sleep_columns = sleep_data.columns.to_list()
+    sleep_data_columns = sleep_data.columns.to_list()
 
     tools = [
         Tool(
             name = "Whoop Sleep Data",
             func=python.run,
             description = f"""
-            Useful for when you need to answer questions about Whoop data stored in pandas dataframe 'df_sleep'. 
-            Run python pandas operations on 'df_sleep' to help you get the right answer. 
-            'df_sleep' has the following columns: {df_sleep_columns}.
+            Useful for when you need to answer questions about Whoop data stored in pandas dataframe 'sleep_data'. 
+            Run python pandas operations on 'sleep_data' to help you get a valid answer. 
+            'sleep_data' has the following columns: {sleep_data_columns}.
             
-            Each column from 'df_sleep' is defined below between '####'
+            Each column from 'sleep_data' is defined below between '####'
             
             ####
             id: Unique identifier for the sleep activity.
@@ -152,22 +223,22 @@ def handle_query(query: Query):
             timezone_offset: The user's timezone offset at the time the sleep was recorded.
             nap: If true, this sleep activity was a nap for the user.
             score_state: The scoring state of the sleep activity. (Enum values: SCORED, PENDING_SCORE, UNSCORABLE)
-            score_stage_summary_total_in_bed_time_milli: Total time in bed in milliseconds.
-            score_stage_summary_total_awake_time_milli: Total awake time in milliseconds.
-            score_stage_summary_total_no_data_time_milli: Total time with no data in milliseconds.
-            score_stage_summary_total_light_sleep_time_milli: Total light sleep time in milliseconds.
-            score_stage_summary_total_slow_wave_sleep_time_milli: Total slow-wave sleep time in milliseconds.
-            score_stage_summary_total_rem_sleep_time_milli: Total REM sleep time in milliseconds.
-            score_stage_summary_sleep_cycle_count: Total number of sleep cycles.
-            score_stage_summary_disturbance_count: Total number of disturbances during sleep.
-            score_sleep_needed_baseline_milli: Baseline sleep needed in milliseconds.
-            score_sleep_needed_need_from_sleep_debt_milli: Additional sleep needed due to sleep debt, in milliseconds.
-            score_sleep_needed_need_from_recent_strain_milli: Additional sleep needed due to recent strain, in milliseconds.
-            score_sleep_needed_need_from_recent_nap_milli: Sleep needed adjustment due to recent nap, in milliseconds.
-            score_respiratory_rate: Rate of breathing while asleep.
-            score_sleep_performance_percentage: How well the Whoop User slept.
-            score_sleep_consistency_percentage: How consistent the Whoop User slept.
-            score_sleep_efficiency_percentage: How efficient the Whoop User slept.
+            score.stage_summary.total_in_bed_time_milli: Total time in bed in milliseconds.
+            score.stage_summary.total_awake_time_milli: Total awake time in milliseconds.
+            score.stage_summary.total_no_data_time_milli: Total time with no data in milliseconds.
+            score.stage_summary.total_light_sleep_time_milli: Total light sleep time in milliseconds.
+            score.stage_summary.total_slow_wave_sleep_time_milli: Total slow-wave sleep time in milliseconds.
+            score.stage_summary.total_rem_sleep_time_milli: Total REM sleep time in milliseconds.
+            score.stage_summary.sleep_cycle_count: Total number of sleep cycles.
+            score.stage_summary.disturbance_count: Total number of disturbances during sleep.
+            score.sleep_needed.baseline_milli: Baseline sleep needed in milliseconds.
+            score.sleep_needed.need_from_sleep_debt_milli: Additional sleep needed due to sleep debt, in milliseconds.
+            score.sleep_needed.need_from_recent_strain_milli: Additional sleep needed due to recent strain, in milliseconds.
+            score.sleep_needed.need_from_recent_nap_milli: Sleep needed adjustment due to recent nap, in milliseconds.
+            score.respiratory_rate: Rate of breathing while asleep.
+            score.sleep_performance_percentage: How well the Whoop User slept.
+            score.sleep_consistency_percentage: How consistent the Whoop User slept.
+            score.sleep_efficiency_percentage: How efficient the Whoop User slept.
             ####
             """
         ),
@@ -189,7 +260,8 @@ def handle_query(query: Query):
     ]
 
     # change the value of the prefix argument in the initialize_agent function. This will overwrite the default prompt template of the zero shot agent type
-    agent_kwargs = {'prefix': f'You are friendly fitness assistant. You are tasked to assist the current user on questions related to their personal Whoop data. You have access to the following tools:'}
+    agent_kwargs = {'prefix': f'You are friendly fitness assistant. You are tasked to assist the current user on questions related to their personal Whoop data.\
+    Whenever dealing with time, convert to minutes and seconds. You have access to the following tools:'}
 
     # initialize the LLM agent
     agent = initialize_agent(tools, 
