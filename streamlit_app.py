@@ -41,7 +41,8 @@ def main():
 
         if st.button("Submit"):
             # Fetch the bot's response
-            response = requests.post("http://localhost:8001/query", json={"query": user_input, "token": token})
+            # response = requests.post("http://localhost:8001/query", json={"query": user_input, "token": token})
+            response = requests.post("http://localhost:8000/query", json={"query": user_input, "token": token})
             # response = requests.post("https://whoop-gpt-45ade1b84fc3.herokuapp.com/query", json={"query": user_input, "token": token})
             bot_reply = response.json().get("response", "Could not fetch response")
 
