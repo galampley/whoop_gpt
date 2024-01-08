@@ -2,7 +2,7 @@
 This FastAPI application manages the OAuth 2.0 flow for Whoop API authentication. It provides endpoints for generating an authorization URL and exchanging an authorization code for an access token.\
 It also has an endpoint (/some_endpoint) that expects an access token and fetches data from the Whoop API.
 '''
-from fastapi import FastAPI, Depends, HTTPException
+from fastapi import FastAPI, Depends, HTTPException, APIRouter
 from fastapi.security import OAuth2AuthorizationCodeBearer
 from wrapped_auth import WhoopAPI
 from pydantic import BaseModel
@@ -18,8 +18,10 @@ logging.basicConfig(level=logging.INFO)
 env_path = "/Users/galampley/Documents/secrets.env"
 load_dotenv(dotenv_path=env_path)
 
-app = FastAPI()
+# app = FastAPI()
+auth_router = APIRouter()
 
+'''
 # fastapi CORS
 app.add_middleware(
     CORSMiddleware,
@@ -29,7 +31,7 @@ app.add_middleware(
     allow_methods=["GET", "POST"],
     allow_headers=["Authorization", "Content-Type"],
 )
-
+'''
 whoop_client_id=os.getenv('WHOOP_CLIENT_ID')
 whoop_client_secret=os.getenv('WHOOP_CLIENT_SECRET')
 
@@ -55,11 +57,13 @@ class Token(BaseModel):
     token_type: str
 
 # dynamic authorization url
-@app.get("/auth_url")
+# @app.get("/auth_url")
+@auth_router.get("/auth_url")
 def get_auth_url():
     return {"auth_url": whoop_api.get_authorization_url()}
 
-@app.get("/token", response_model=Token)
+# @app.get("/token", response_model=Token)
+@auth_router.get("/token", response_model=Token)
 async def get_token(code: str, state: str = None):
     logging.info(f"Received code: {code}")
     logging.info(f"Received state: {state}")

@@ -1,4 +1,4 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, APIRouter
 from pydantic import BaseModel
 import openai
 import requests
@@ -25,8 +25,10 @@ llm = ChatOpenAI(
     temperature=0.0
     )
 
-app = FastAPI()
+# app = FastAPI()
+query_router = APIRouter()
 
+'''
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],  # Replace with the actual origin you want to allow
@@ -34,6 +36,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+'''
 
 def today_date(query:str) -> str:
     return datetime.now().strftime("%Y-%m-%d")
@@ -174,7 +177,8 @@ class Query(BaseModel):
     query: str
     token: str 
 
-@app.post("/query")
+# @app.post("/query")
+@query_router.post("/query")
 def handle_query(query: Query):
     print(f"Received query: {query.dict()}")  # Debugging line
 
