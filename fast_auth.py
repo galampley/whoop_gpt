@@ -42,8 +42,8 @@ logging.info(f"WHOOP_CLIENT_SECRET: {whoop_client_secret}")
 whoop_api = WhoopAPI(
     client_id=whoop_client_id,
     client_secret=whoop_client_secret,
-    redirect_uri='http://localhost:8000/token',  # Callback URL
-    # redirect_uri='https://whoop-gpt-45ade1b84fc3.herokuapp.com/token',  # Callback URL
+    # redirect_uri='http://localhost:8000/token',  # Callback URL
+    redirect_uri='https://whoop-gpt-45ade1b84fc3.herokuapp.com/token',  # Callback URL
     all_scopes=["read:profile", "read:recovery", "read:workout", "read:sleep", "read:body_measurement", "read:cycles"]
 )
 
