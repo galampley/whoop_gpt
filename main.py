@@ -1,6 +1,6 @@
 from fastapi import FastAPI
-from auth_server import auth_router
-from query_server import query_router
+from fast_auth import auth_router
+from query import query_router
 
 app = FastAPI()
 

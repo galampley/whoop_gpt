@@ -4,7 +4,7 @@ It also has an endpoint (/some_endpoint) that expects an access token and fetche
 '''
 from fastapi import FastAPI, Depends, HTTPException, APIRouter
 from fastapi.security import OAuth2AuthorizationCodeBearer
-from wrapped_auth import WhoopAPI
+from whoop_auth import WhoopAPI
 from pydantic import BaseModel
 from fastapi.responses import RedirectResponse
 from fastapi.middleware.cors import CORSMiddleware
