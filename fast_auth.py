@@ -7,7 +7,7 @@ from fastapi.security import OAuth2AuthorizationCodeBearer
 from whoop_auth import WhoopAPI
 from pydantic import BaseModel
 from fastapi.responses import RedirectResponse
-from fastapi.middleware.cors import CORSMiddleware
+# from fastapi.middleware.cors import CORSMiddleware
 import logging
 import requests
 from dotenv import load_dotenv
@@ -78,8 +78,8 @@ async def get_token(code: str, state: str = None):
         logging.error(f"Error occurred: {e}")
         raise HTTPException(status_code=400, detail=str(e))
 
-    streamlit_url = f"http://localhost:8501/?token={access_token}"
+    # streamlit_url = f"http://localhost:8501/?token={access_token}"
     # streamlit_url = f"https://whoop-gpt-45ade1b84fc3.herokuapp.com/?token={access_token}"
-    # streamlit_url = f"https://whoopgpt-5srrxenqyvgshz5ccbqhda.streamlit.app/?token={access_token}"
+    streamlit_url = f"https://whoopgpt-5srrxenqyvgshz5ccbqhda.streamlit.app/?token={access_token}"
     return RedirectResponse(url=streamlit_url)
 
