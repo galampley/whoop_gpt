@@ -16,3 +16,4 @@ requests_oauthlib
 streamlit
 uvicorn
 langchain_experimental
+langchain_openai
